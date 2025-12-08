@@ -1,16 +1,21 @@
 "use client";
 
-import { useActionState, useState } from "react"; // Next.js 16 / React 19 uses useActionState
+import { useActionState, useState, use } from "react"; // Next.js 16 / React 19 uses useActionState
 import Link from "next/link";
 import { ArrowLeft, Calendar, Camera, Upload, Loader2, AlertCircle } from "lucide-react";
 import { createProjectUpdate } from "@/app/actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
 
 const initialState = {
   message: "",
 };
 
-export default function CreateUpdatePage({ params }: { params: { id: string } }) {
-  const projectId = params.id;
+export default function CreateUpdatePage({ params }: { params: Promise<{ id: string }> }) {
+  const projectId = use(params).id;
   
   // Bind the projectId to the server action
   const createUpdateWithId = createProjectUpdate.bind(null, projectId);
@@ -24,117 +29,126 @@ export default function CreateUpdatePage({ params }: { params: { id: string } })
   const stages = [ "Demolicion", "Cimentacion", "Estructura", "Instalaciones", "Acabados", "Entrega" ];
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto container py-8">
       {/* Breadcrumb / Header */}
-      <div className="mb-8">
-        <Link href={`/dashboard/projects/${projectId}`} className="inline-flex items-center text-sm text-[var(--color-text-muted)] hover:text-[var(--color-primary)] mb-4">
-          <ArrowLeft size={16} className="mr-2" />
-          Volver al proyecto
-        </Link>
-        <h1 className="text-3xl font-bold">Registrar Nuevo Avance</h1>
-        <p className="text-[var(--color-text-muted)] mt-2">Completa la información para notificar a los interesados.</p>
+      <div className="mb-8 pl-1">
+        <Button variant="link" className="pl-0 text-muted-foreground hover:text-primary mb-2" asChild>
+          <Link href={`/dashboard/projects/${projectId}`}>
+            <ArrowLeft size={16} className="mr-2" />
+            Volver al proyecto
+          </Link>
+        </Button>
+        <h1 className="text-3xl font-bold tracking-tight">Registrar Nuevo Avance</h1>
+        <p className="text-muted-foreground mt-2">Completa la información para notificar a los interesados.</p>
       </div>
 
       <form action={formAction} className="space-y-8">
         
         {state?.message && (
-          <div className="p-4 bg-red-50 text-red-600 rounded-md flex items-center gap-2">
+          <div className="p-4 bg-red-50 text-red-600 rounded-md flex items-center gap-2 border border-red-100">
             <AlertCircle size={20} />
             <p>{state.message}</p>
           </div>
         )}
 
         {/* Main Card */}
-        <div className="card bg-[var(--color-background)] p-6 md:p-8">
-          
-          {/* Title & Date Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="form-group">
-              <label htmlFor="title" className="label">Título del Avance</label>
-              <input 
-                type="text" 
-                name="title"
-                id="title" 
-                className="input" 
-                placeholder="Ej. Finalización de cimientos" 
-                required
-              />
-            </div>
+        <Card>
+          <CardContent className="p-6 md:p-8 space-y-6">
             
-            <div className="form-group">
-              <label htmlFor="date" className="label">Fecha</label>
-              <div className="relative">
-                <input 
-                  type="date" 
-                  name="date"
-                  id="date" 
-                  className="input pl-10" 
-                  defaultValue={new Date().toISOString().split('T')[0]}
+            {/* Title & Date Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid gap-2">
+                <Label htmlFor="title">Título del Avance</Label>
+                <Input 
+                  type="text" 
+                  name="title"
+                  id="title" 
+                  placeholder="Ej. Finalización de cimientos" 
                   required
                 />
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="date">Fecha</Label>
+                <div className="relative">
+                  <Input 
+                    type="date" 
+                    name="date"
+                    id="date" 
+                    className="pl-10" 
+                    defaultValue={new Date().toISOString().split('T')[0]}
+                    required
+                  />
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Stage Selection - Hidden Input for Form Submission + UI Buttons */}
-          <div className="form-group mb-6">
-            <label className="label">Etapa de la Obra</label>
-            <input type="hidden" name="stage" value={selectedStage} />
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {stages.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setSelectedStage(s)}
-                  className={`
-                    px-4 py-3 rounded-md text-sm font-medium border transition-all text-center
-                    ${selectedStage === s 
-                      ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-md' 
-                      : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] bg-[var(--color-background)]'}
-                  `}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="form-group mb-6">
-            <label htmlFor="description" className="label">Descripción Detallada</label>
-            <textarea 
-              name="description"
-              id="description" 
-              className="textarea" 
-              placeholder="Describe los trabajos realizados..."
-              rows={4}
-            />
-          </div>
-
-          {/* Photos Upload (Still Visual Only for now) */}
-          <div className="form-group">
-            <label className="label mb-2 block">Evidencia Fotográfica</label>
-            <div className="upload-zone group">
-              <div className="h-12 w-12 rounded-full bg-[hsla(var(--primary-h),var(--primary-s),var(--primary-l),0.05)] flex items-center justify-center text-[var(--color-primary)] group-hover:scale-110 transition-transform">
-                <Camera size={24} />
-              </div>
-              <div>
-                <span className="text-[var(--color-primary)] font-medium">Sube fotos o vídeos</span>
-                <span className="text-[var(--color-text-muted)]"> (Aún no conectado a S3)</span>
+            {/* Stage Selection - Hidden Input for Form Submission + UI Buttons */}
+            <div className="grid gap-3">
+              <Label>Etapa de la Obra</Label>
+              <input type="hidden" name="stage" value={selectedStage} />
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {stages.map((s) => (
+                  <Button
+                    key={s}
+                    type="button"
+                    variant={selectedStage === s ? "default" : "outline"}
+                    onClick={() => setSelectedStage(s)}
+                    className={`h-auto py-3 ${selectedStage !== s ? "text-muted-foreground hover:text-primary hover:border-primary" : ""}`}
+                  >
+                    {s}
+                  </Button>
+                ))}
               </div>
             </div>
-          </div>
 
-        </div>
+            {/* Description */}
+            <div className="grid gap-2">
+              <Label htmlFor="description">Descripción Detallada</Label>
+              <Textarea 
+                name="description"
+                id="description" 
+                placeholder="Describe los trabajos realizados..."
+                rows={4}
+                className="min-h-[120px]"
+              />
+            </div>
+
+            {/* Photos Upload */}
+            <div className="grid gap-2">
+              <Label htmlFor="images">Evidencia Fotográfica</Label>
+              <div className="border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center gap-4 text-center hover:border-primary hover:bg-primary/5 transition-colors group relative">
+                <input 
+                  type="file" 
+                  name="images" 
+                  id="images" 
+                  multiple 
+                  accept="image/*"
+                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                />
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                  <Camera size={24} />
+                </div>
+                <div>
+                  <span className="text-primary font-medium">Click para subir fotos</span>
+                  <span className="text-muted-foreground text-sm block mt-1">Soporta múltiples imágenes</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-4">
-          <Link href={`/dashboard/projects/${projectId}`} className="btn btn-outline px-6">Cancelar</Link>
-          <button 
+          <Button variant="outline" size="lg" asChild>
+            <Link href={`/dashboard/projects/${projectId}`}>Cancelar</Link>
+          </Button>
+          <Button 
             type="submit" 
+            size="lg"
             disabled={isPending}
-            className="btn btn-primary px-8 h-11 text-base shadow-lg shadow-blue-900/20 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="shadow-lg shadow-primary/20"
           >
             {isPending ? (
               <>
@@ -147,11 +161,10 @@ export default function CreateUpdatePage({ params }: { params: { id: string } })
                 Publicar Avance
               </>
             )}
-          </button>
+          </Button>
         </div>
 
       </form>
     </div>
   );
 }
-

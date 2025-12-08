@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 // import { Stage } from "@prisma/client"; // Removed to avoid lint error until restart
 type Stage = "Demolicion" | "Cimentacion" | "Estructura" | "Instalaciones" | "Acabados" | "Entrega";
 
+import { put } from "@vercel/blob";
+
 // Tip: In a real app, validate with Zod
 export async function createProjectUpdate(projectId: string, prevState: any, formData: FormData) {
 
@@ -14,9 +16,27 @@ export async function createProjectUpdate(projectId: string, prevState: any, for
     const dateStr = formData.get("date") as string;
     const stage = formData.get("stage") as Stage;
 
+    // Extract files (can be multiple)
+    const files = formData.getAll("images") as File[];
+
     // Basic validation
     if (!title || !dateStr || !stage) {
         return { message: "Faltan campos obligatorios" };
+    }
+
+    // Upload images to Vercel Blob
+    const imageUrls: string[] = [];
+    if (files.length > 0 && files[0].size > 0) {
+        try {
+            const uploadPromises = files.map(file =>
+                put(`projects/${projectId}/${file.name}`, file, { access: 'public' })
+            );
+            const blobResults = await Promise.all(uploadPromises);
+            blobResults.forEach(blob => imageUrls.push(blob.url));
+        } catch (error) {
+            console.error("Blob Upload Error:", error);
+            return { message: "Hubo un error subiendo las imágenes." };
+        }
     }
 
     // Ensure project exists (or handle error gracefully)
@@ -34,7 +54,7 @@ export async function createProjectUpdate(projectId: string, prevState: any, for
                 description,
                 date: new Date(dateStr),
                 stage: stage,
-                images: [], // Placeholder for now (handling file uploads is a separate step)
+                images: imageUrls,
                 responsableId: "demo-user", // Hardcoded for prototype
             },
         });
