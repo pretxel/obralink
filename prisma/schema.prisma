@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  address     String
+  clientName  String
+  startDate   DateTime
+  endDate     DateTime?
+  status      ProjectStatus @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  updates     ProgressUpdate[]
+  // Add relation to users/members if needed later
+}
+
+model ProgressUpdate {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  date          DateTime @default(now())
+  stage         Stage
+  images        String[] // Array of image URLs
+  responsableId String   // Placeholder for User ID
+  
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum Stage {
+  Demolicion
+  Cimentacion
+  Estructura
+  Instalaciones
+  Acabados
+  Entrega
+}
