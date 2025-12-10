@@ -7,6 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
+import { DeleteEvidenceButton } from "@/components/delete-evidence-button";
+import { DeleteUpdateButton } from "@/components/delete-update-button";
+
 export default async function UpdateDetailsPage({ 
   params 
 }: { 
@@ -91,7 +94,10 @@ export default async function UpdateDetailsPage({
                 {update.images.map((imgUrl: string, i: number) => {
                   const isImage = /\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(imgUrl);
                   return (
-                    <Card key={i} className="overflow-hidden border-none shadow-md group">
+                    <Card key={i} className="overflow-hidden border-none shadow-md group relative">
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                         <DeleteEvidenceButton imgUrl={imgUrl} projectId={projectId} updateId={updateId} />
+                      </div>
                       <div className="aspect-video bg-muted relative flex items-center justify-center">
                            {isImage ? (
                              <img src={imgUrl} alt={`Evidencia ${i + 1}`} className="object-cover w-full h-full" />
@@ -136,11 +142,14 @@ export default async function UpdateDetailsPage({
                  </div>
                </div>
                <Separator />
-                <div className="pt-2">
-                 <Button className="w-full" variant="outline">
-                   <Share2 size={16} className="mr-2" />
-                   Compartir Avance
+                <div className="pt-2 flex flex-col gap-2">
+                 <Button className="w-full" variant="outline" asChild>
+                   <Link href={`/public/share/${project.shareToken || ''}`}>
+                      <Share2 size={16} className="mr-2" />
+                      Vista Pública
+                   </Link>
                  </Button>
+                 <DeleteUpdateButton projectId={projectId} updateId={updateId} />
                </div>
             </CardContent>
           </Card>

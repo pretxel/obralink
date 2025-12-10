@@ -123,3 +123,35 @@ export async function createDemoProject() {
         throw error;
     }
 }
+
+export async function deleteEvidence(projectId: string, updateId: string, imageUrl: string) {
+    try {
+        const update = await prisma.progressUpdate.findUnique({ where: { id: updateId } });
+        if (!update) throw new Error("Update not found");
+
+        const newImages = update.images.filter(img => img !== imageUrl);
+
+        await prisma.progressUpdate.update({
+            where: { id: updateId },
+            data: { images: newImages }
+        });
+
+        revalidatePath(`/dashboard/projects/${projectId}`);
+        revalidatePath(`/dashboard/projects/${projectId}/updates/${updateId}`);
+        return { success: true };
+    } catch (error) {
+        console.error("Delete error:", error);
+        return { success: false, error: "Failed to delete" };
+    }
+}
+
+export async function deleteProjectUpdate(projectId: string, updateId: string) {
+    try {
+        await prisma.progressUpdate.delete({ where: { id: updateId } });
+        revalidatePath(`/dashboard/projects/${projectId}`);
+        return { success: true };
+    } catch (error) {
+        console.error("Delete update error:", error);
+        return { success: false, error: "Failed to delete update" };
+    }
+}

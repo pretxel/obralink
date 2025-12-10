@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { UpdateCardMenu } from "@/components/update-card-menu";
 
 // Define the component as async to allow server-side data fetching
 export default async function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -137,16 +138,13 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
                    </div>
 
                   <Card className="hover:shadow-lg transition-shadow duration-300">
-                    {/* Card Header */}
                     <CardHeader className="p-4 pb-3 border-b">
                       <div className="flex justify-between items-start mb-1">
                         {/* Using custom orange for badge */}
                         <Badge className="bg-brand-orange hover:bg-brand-orange/90 text-white border-none">
                           {update.stage}
                         </Badge>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
-                          <MoreVertical size={16} />
-                        </Button>
+                        <UpdateCardMenu projectId={projectId} updateId={update.id} />
                       </div>
                       <CardTitle className="text-lg leading-tight">{update.title}</CardTitle>
                     </CardHeader>
