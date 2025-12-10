@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, MapPin, Calendar, Clock, Download, MoreVertical, Image as ImageIcon, ChevronRight } from "lucide-react";
+import { Plus, MapPin, Calendar, Clock, Download, MoreVertical, Image as ImageIcon, ChevronRight, FileText } from "lucide-react";
 import prisma from "@/lib/prisma"; // Real DB import
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,13 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
     where: { projectId: projectId },
     orderBy: { date: 'desc' },
   });
+
+  const totalFiles = updates.reduce((acc, update) => acc + update.images.length, 0);
+
+  // Calculate days in construction
+  const start = new Date(project.startDate);
+  const end = project.endDate ? new Date(project.endDate) : new Date();
+  const daysInConstruction = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 
   return (
     <div className="max-w-5xl mx-auto container py-8">
@@ -57,8 +64,8 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
         </div>
 
         <div className="flex gap-3">
-           <Button variant="outline" asChild>
-             <Link href={`/public/share/token123`} target="_blank" title="Ver como cliente (Simulado)">
+           <Button variant="outline" asChild disabled={!project.shareToken}>
+             <Link href={project.shareToken ? `/public/share/${project.shareToken}` : '#'} target="_blank" title="Ver como cliente">
                <Download size={20} className="mr-2" />
                Vista Cliente
              </Link>
@@ -84,13 +91,13 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
         <Card>
           <CardContent className="p-4 flex flex-col justify-between h-full">
              <span className="text-sm text-muted-foreground">Archivos</span>
-             <span className="text-2xl font-bold">12</span>
+             <span className="text-2xl font-bold">{totalFiles}</span>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 flex flex-col justify-between h-full">
              <span className="text-sm text-muted-foreground">Días en Obra</span>
-             <span className="text-2xl font-bold">45</span>
+             <span className="text-2xl font-bold">{daysInConstruction}</span>
           </CardContent>
         </Card>
         <Card className="bg-primary/5 border-primary/20">
@@ -153,14 +160,24 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
                       {/* Attachments / Media Preview */}
                       {update.images.length > 0 && (
                         <div className="grid grid-cols-3 gap-2 mb-3">
-                          {update.images.slice(0, 3).map((img: string, i: number) => (
-                            <div key={i} className="aspect-square bg-muted rounded-md overflow-hidden relative group cursor-pointer">
-                               {/* Real Image */}
-                               <img src={img} alt={`Evidencia ${i + 1}`} className="object-cover w-full h-full" />
-                               {/* Overlay */}
-                               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
-                            </div>
-                          ))}
+                          {update.images.slice(0, 3).map((imgUrl: string, i: number) => {
+                            const isImage = /\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(imgUrl);
+                            return (
+                              <div key={i} className="aspect-square bg-muted rounded-md overflow-hidden relative group cursor-pointer flex items-center justify-center border border-border">
+                                 {/* Real Image or File Icon */}
+                                 {isImage ? (
+                                   <img src={imgUrl} alt={`Evidencia ${i + 1}`} className="object-cover w-full h-full" />
+                                 ) : (
+                                   <div className="flex flex-col items-center justify-center text-muted-foreground p-2 w-full h-full bg-background/50">
+                                     <FileText size={28} className="mb-1" />
+                                     <span className="text-[10px] uppercase font-bold tracking-wider">Archivo</span>
+                                   </div>
+                                 )}
+                                 {/* Overlay */}
+                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
+                              </div>
+                            );
+                          })}
                           {update.images.length > 3 && (
                             <div className="aspect-square bg-muted rounded-md flex items-center justify-center text-xs font-bold text-muted-foreground cursor-pointer hover:bg-accent">
                               +{update.images.length - 3}

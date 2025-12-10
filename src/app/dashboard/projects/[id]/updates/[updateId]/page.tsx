@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma"; // Real DB import
-import { ArrowLeft, Calendar, MapPin, Image as ImageIcon, Share2 } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Image as ImageIcon, Share2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -88,13 +88,24 @@ export default async function UpdateDetailsPage({
             
             {update.images.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                {update.images.map((img: string, i: number) => (
-                  <Card key={i} className="overflow-hidden border-none shadow-md group">
-                    <div className="aspect-video bg-muted relative flex items-center justify-center">
-                         <img src={img} alt={`Evidencia ${i + 1}`} className="object-cover w-full h-full" />
-                    </div>
-                  </Card>
-                ))}
+                {update.images.map((imgUrl: string, i: number) => {
+                  const isImage = /\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(imgUrl);
+                  return (
+                    <Card key={i} className="overflow-hidden border-none shadow-md group">
+                      <div className="aspect-video bg-muted relative flex items-center justify-center">
+                           {isImage ? (
+                             <img src={imgUrl} alt={`Evidencia ${i + 1}`} className="object-cover w-full h-full" />
+                           ) : (
+                             <div className="flex flex-col items-center justify-center text-muted-foreground p-4">
+                               <FileText size={48} className="mb-2 opacity-80" />
+                               <span className="text-sm font-medium text-center break-all px-4">{imgUrl.split('/').pop()}</span>
+                               <span className="text-xs uppercase tracking-wider font-bold mt-1 text-primary">Archivo Adjunto</span>
+                             </div>
+                           )}
+                      </div>
+                    </Card>
+                  );
+                })}
               </div>
             ) : (
               <div className="p-8 border-2 border-dashed border-muted-foreground/20 rounded-lg text-center text-muted-foreground">

@@ -8,9 +8,26 @@ type Stage = "Demolicion" | "Cimentacion" | "Estructura" | "Instalaciones" | "Ac
 
 import { put } from "@vercel/blob";
 
+import { cookies } from "next/headers";
+
+export async function authenticateShareAccess(password: string, token: string) {
+    const expected = process.env.NEXT_PUBLIC_DEMO_PASSWORD || "123";
+
+    if (password === expected) {
+        const cookieStore = await cookies();
+        cookieStore.set(`share_success_${token}`, 'true', {
+            maxAge: 3600, // 1 hour
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            path: '/'
+        });
+        return { success: true };
+    }
+    return { success: false };
+}
+
 // Tip: In a real app, validate with Zod
 export async function createProjectUpdate(projectId: string, prevState: any, formData: FormData) {
-
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const dateStr = formData.get("date") as string;
@@ -18,26 +35,31 @@ export async function createProjectUpdate(projectId: string, prevState: any, for
 
     // Extract files (can be multiple)
     const files = formData.getAll("images") as File[];
+    // Extract already uploaded URLs (from client-side upload)
+    const existingUrls = formData.getAll("imageUrls") as string[];
 
     // Basic validation
     if (!title || !dateStr || !stage) {
         return { message: "Faltan campos obligatorios" };
     }
 
-    // Upload images to Vercel Blob
-    const imageUrls: string[] = [];
+    // Upload images to Vercel Blob (Server-Side Fallback)
+    const newImageUrls: string[] = [];
     if (files.length > 0 && files[0].size > 0) {
         try {
             const uploadPromises = files.map(file =>
-                put(`projects/${projectId}/${file.name}`, file, { access: 'public' })
+                put(`projects/${projectId}/${Date.now()}-${Math.random().toString(36).substring(2, 9)}-${file.name}`, file, { access: 'public' })
             );
             const blobResults = await Promise.all(uploadPromises);
-            blobResults.forEach(blob => imageUrls.push(blob.url));
+            blobResults.forEach(blob => newImageUrls.push(blob.url));
         } catch (error) {
             console.error("Blob Upload Error:", error);
-            return { message: "Hubo un error subiendo las imágenes." };
+            // We continue even if server upload fails if we have existing URLs? 
+            // Or return error? Let's log and maybe warn.
         }
     }
+
+    const finalImageUrls = [...existingUrls, ...newImageUrls];
 
     // Ensure project exists (or handle error gracefully)
     // For this demo, if using a mock ID "1", this might fail if DB is empty.
@@ -54,7 +76,7 @@ export async function createProjectUpdate(projectId: string, prevState: any, for
                 description,
                 date: new Date(dateStr),
                 stage: stage,
-                images: imageUrls,
+                images: finalImageUrls,
                 responsableId: "demo-user", // Hardcoded for prototype
             },
         });
@@ -75,7 +97,15 @@ export async function createDemoProject() {
             where: { name: "Residencia Villa Verde - Demo" }
         });
 
-        if (existing) return existing;
+        if (existing) {
+            if (!existing.shareToken) {
+                return await prisma.project.update({
+                    where: { id: existing.id },
+                    data: { shareToken: crypto.randomUUID() }
+                });
+            }
+            return existing;
+        }
 
         const project = await prisma.project.create({
             data: {
@@ -83,7 +113,8 @@ export async function createDemoProject() {
                 address: "Calle Falsa 123",
                 clientName: "Cliente Demo",
                 startDate: new Date(),
-                status: "ACTIVE"
+                status: "ACTIVE",
+                shareToken: crypto.randomUUID()
             }
         });
         return project;

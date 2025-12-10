@@ -15,19 +15,19 @@ export default function DashboardLayout({
         </div>
         
         <nav className="flex-1 p-4 space-y-2">
-          <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface)] rounded-md transition-colors">
+          <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface)] rounded-md transition-colors opacity-50 pointer-events-none select-none">
             <LayoutDashboard size={20} />
             <span>Dashboard</span>
           </Link>
-          <Link href="/dashboard/projects" className="flex items-center gap-3 px-3 py-2 bg-[hsla(var(--primary-h),var(--primary-s),var(--primary-l),0.05)] text-[var(--color-primary)] rounded-md font-medium">
+          <Link href="/dashboard/projects" className="flex items-center gap-3 px-3 py-2 bg-[hsla(var(--primary-h),var(--primary-s),var(--primary-l),0.05)] text-[var(--color-primary)] rounded-md font-medium opacity-50 pointer-events-none select-none">
             <FolderKanban size={20} />
             <span>Proyectos</span>
           </Link>
-          <Link href="/dashboard/team" className="flex items-center gap-3 px-3 py-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface)] rounded-md transition-colors">
+          <Link href="/dashboard/team" className="flex items-center gap-3 px-3 py-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface)] rounded-md transition-colors opacity-50 pointer-events-none select-none">
             <Users size={20} />
             <span>Equipo</span>
           </Link>
-          <Link href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface)] rounded-md transition-colors">
+          <Link href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface)] rounded-md transition-colors opacity-50 pointer-events-none select-none">
             <Settings size={20} />
             <span>Configuración</span>
           </Link>
